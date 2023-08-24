@@ -1,7 +1,8 @@
-# RemoteDesktop
-Reverse remote desktop application which is currently in development.
+# Universal Reverse Remote Desktop Protocal
+A universal reverse-proxied VNC and command line manager built on Python.
 
 I would appreciate a small donation for this project to keep me motivated keep it going. This is just the start :)
+## Please ignore the following text as this README needs to be revised.
 
 JOIN MY DISCORD FOR THE LATEST UPDATES: [https://discord.gg/3hn7aqR3Za](https://discord.gg/3hn7aqR3Za)
 ## Setup
