@@ -21,4 +21,11 @@ def connnect():
             x = fernet.encrypt(bytes(json.dumps({"refrence": refrence, "auth": authcode, "encrypt": encryption, "intergrity": True}),encoding="utf-8"))
             print(x)
             serversocket.sendall(x)
+        recieveddata = serversocket.recv(checkinport)
+        print(recieveddata)
+        try:
+            data = json.loads(recieveddata.decode("utf-8"))
+        except:
+            data = json.loads(Fernet(presharedencryption).decrypt(recieveddata).decode("utf-8"))
+        print(data)
 connnect()
