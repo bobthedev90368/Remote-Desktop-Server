@@ -1,6 +1,4 @@
-import time
-import json
-import socket
+import time, json, socket
 from cryptography.fernet import Fernet
 
 host = "127.0.0.1"
@@ -10,22 +8,26 @@ presharedencryption = b'ts1UOpWUIE-PFmHE-HWhVWKS5YPrfSQzHjwFm7wnCIQ=' #set to wh
 authcode = "" #set if you have set password authentication on the host
 refrence = "" #will set a text value in the client connection table
 
-def connnect():
-    if presharedencryption != "":
-        fernet = Fernet(presharedencryption)
+def connect(connectionstring):
+    time.sleep(2)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serversocket:
+        print(connectionstring['host'], connectionstring['port'])
+        serversocket.connect((connectionstring['host'], connectionstring['port']))
+
+def initconnection():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serversocket:
         serversocket.connect((host, checkinport))
         if presharedencryption == "":
-            serversocket.sendall(bytes(json.dumps({"refrence": refrence, "auth": authcode, "encrypt": encryption, "intergrity": True}),encoding="utf-8"))
+            serversocket.sendall(bytes(json.dumps({"refrence": refrence, "auth": authcode, "encrypt": encryption}),encoding="utf-8"))
         else:
-            x = fernet.encrypt(bytes(json.dumps({"refrence": refrence, "auth": authcode, "encrypt": encryption, "intergrity": True}),encoding="utf-8"))
-            print(x)
-            serversocket.sendall(x)
+            tosend = Fernet(presharedencryption).encrypt(bytes(json.dumps({"refrence": refrence, "auth": authcode, "encrypt": encryption}),encoding="utf-8"))
+            serversocket.sendall(tosend)
         recieveddata = serversocket.recv(checkinport)
-        print(recieveddata)
         try:
             data = json.loads(recieveddata.decode("utf-8"))
         except:
             data = json.loads(Fernet(presharedencryption).decrypt(recieveddata).decode("utf-8"))
         print(data)
-connnect()
+        connect(data)
+
+initconnection()

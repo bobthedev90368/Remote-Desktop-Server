@@ -1,8 +1,4 @@
-import time
-import json
-import socket
-import random
-import string
+import time, json, socket, random, string
 from cryptography.fernet import Fernet
 
 host = "127.0.0.1"
@@ -13,7 +9,7 @@ portrange = [1025, 65536] #Excluding default checkin port lowest port at 0 value
 portblacklist = [] #any ports you dont want being used
 usedports = []
 connnections = []
-defaultpassphraselength = 10 #passphrase used internally for making sure clients are authorized to connect higher = more secure
+defaultpassphraselength = 10 #passphrase used internally for making sure clients are authorized to connect. higher = more secure; too high = decryption issues
 
 
 def generatepassphrase():
@@ -22,7 +18,6 @@ def generatepassphrase():
     for i in range(defaultpassphraselength):
         passphrase = passphrase + random.choice(characters)
     return passphrase
-
 
 def getnewport():
     global usedports
@@ -39,10 +34,10 @@ def getnewport():
         else:
             lastport += 1
 
-def clientlistner(host, port):
-    print(host,port,connnections)
+def clientlistner(id):
+    print(connnections[id])
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
-        client.bind((host, port))
+        client.bind((connnections[id]['host'], connnections[id]['port']))
         client.listen()
         clientsocket, address = client.accept()
         with clientsocket:
@@ -56,7 +51,6 @@ def waitconnect(host, checkinport, cuemax):
         with clientsocket:
             print("Connected @", address)
             recieveddata = clientsocket.recv(checkinport)
-            print(recieveddata)
             try:
                 data = json.loads(recieveddata.decode("utf-8"))
                 preshareencrypt = False
@@ -64,23 +58,26 @@ def waitconnect(host, checkinport, cuemax):
                 preshareencrypt = True
                 data = json.loads(Fernet(presharedencryption).decrypt(recieveddata).decode("utf-8"))
             print(data)
-            passphrase = generatepassphrase()
-            if data['encrypt'] == True:
-                port = getnewport()
-                encryptiontoken = Fernet.generate_key()
-                connnections.append({"port": port, "encryptiontoken": encryptiontoken, "presharedencryption": preshareencrypt, "refrence": data["refrence"], "passphrase": passphrase})
-                toreturn = {'encryptiontoken': encryptiontoken, 'port': getnewport(), "id": len(connnections)-1, "passphrase": passphrase}
+            if data['auth'] != authcode and authcode != "":
+                clientsocket.close() 
+                #restart the function
             else:
-                port = getnewport()
-                connnections.append({"port": port, "encryptiontoken": False, "presharedencryption": preshareencrypt, "refrence": data["refrence"], "passphrase": passphrase})
-                toreturn = {'port': getnewport(), "id": len(connnections)-1, "passphrase": passphrase}
-            if presharedencryption:
-                toreturn = Fernet(presharedencryption).encrypt(bytes(json.dumps(toreturn),encoding="utf-8"))
-            else:
-                toreturn = bytes(json.dumps(toreturn),encoding="utf-8")
-            clientsocket.sendall(toreturn)
-            print(toreturn)
-            print(connnections)
-            clientlistner(host, port)
+                passphrase = generatepassphrase()
+                if data['encrypt'] == True:
+                    port = getnewport()
+                    encryptiontoken = Fernet.generate_key()
+                    connnections.append({"port": port, "host": host, "encryptiontoken": encryptiontoken, "presharedencryption": preshareencrypt, "refrence": data["refrence"], "passphrase": passphrase})
+                    toreturn = {'encryptiontoken': encryptiontoken, 'port': port, "host": host, "id": len(connnections)-1, "passphrase": passphrase}
+                else:
+                    port = getnewport()
+                    connnections.append({"port": port, "host": host, "encryptiontoken": False, "presharedencryption": preshareencrypt, "refrence": data["refrence"], "passphrase": passphrase})
+                    toreturn = {'port': port, "host": host, "id": len(connnections)-1, "passphrase": passphrase}
+                if presharedencryption:
+                    toreturn = Fernet(presharedencryption).encrypt(bytes(json.dumps(toreturn),encoding="utf-8"))
+                else:
+                    toreturn = bytes(json.dumps(toreturn),encoding="utf-8")
+                clientsocket.sendall(toreturn)
+                clientsocket.close()
+                clientlistner(len(connnections)-1)
             
 waitconnect(host, checkinport, 5)
