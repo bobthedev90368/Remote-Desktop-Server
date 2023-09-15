@@ -1,5 +1,5 @@
 # Universal Reverse Remote Desktop Protocal
-A universal reverse-proxied VNC and command line manager built on Python.
+A universal reverse-proxied VNC like tool and command line manager built on Python.
 
 I would appreciate a small donation for this project to keep me motivated keep it going. This is just the start :)
 
